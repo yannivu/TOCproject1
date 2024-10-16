@@ -1,4 +1,6 @@
 import csv
+import time
+import matplotlib.pyplot as plt
 
 # Function to read the CNF file in 2-SAT format
 def readCnf(filePath):
@@ -112,29 +114,58 @@ class DPLL:
                 newCNF.append(clause)
         return newCNF
 
-# Main function to read the file and solve each problem
+# Main function with timing and plotting
 def main():
     fileName = input("Enter the CSV file name: ")
-    problems, answers = readCnf(fileName)  # Read the CNF file
+    problems, answers = readCnf(fileName)
 
-    # Open a file to write the results
-    with open("2SAT_solved.txt", "w") as resultFile:
-        # Solve each problem using the DPLL class
+    # Initialize lists for graphing
+    sizes = []
+    times = []
+    results = []
+
+    with open(f"{fileName}_solved.txt", "w") as resultFile:
         for problemId, clauses in problems.items():
             dpll = DPLL(clauses)
+            
+            # Start timer
+            start_time = time.time()
             result = dpll.solve()
+            elapsed_time = time.time() - start_time
+            
+            # Problem size and result recording
+            problem_size = len(clauses)
+            sizes.append(problem_size)
+            times.append(elapsed_time)
+            results.append(result)
 
-            # Write the result
+            # Write result to file
             if result:
-                resultFile.write(f"Problem {problemId}: SATISFIABLE\n")
+                resultFile.write(f"Problem {problemId}: SATISFIABLE ({elapsed_time} seconds)\n")
             else:
-                resultFile.write(f"Problem {problemId}: UNSATISFIABLE\n")
+                resultFile.write(f"Problem {problemId}: UNSATISFIABLE ({elapsed_time} seconds)\n")
             resultFile.write(f"ANSWER KEY: {answers[problemId]}\n")
             resultFile.write("\n")
             
-            print(f"Problem {problemId} solved.")
-            
-    print(f"All problems from '{fileName}' solved. Results written to '2SAT_solved.txt'.")
+            print(f"Problem {problemId} solved in {elapsed_time:.4f} seconds.")
+
+    # Plotting the results
+    plt.figure(figsize=(10, 6))
+
+    # Plot SATISFIABLE as blue circles and UNSATISFIABLE as red triangles
+    for i in range(len(sizes)):
+        if results[i]:  # SATISFIABLE
+            plt.scatter(sizes[i], times[i], color='blue', label='SATISFIABLE' if i == 0 else "", marker='o')
+        else:  # UNSATISFIABLE
+            plt.scatter(sizes[i], times[i], color='red', label='UNSATISFIABLE' if i == 0 else "", marker='^')
+
+    # Set labels and title
+    plt.xlabel('Problem Size (Number of Clauses)')
+    plt.ylabel('Execution Time (seconds)')
+    plt.title('Execution Time vs. Problem Size for 2-SAT Solver')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
 
 if __name__ == "__main__":
     main()
